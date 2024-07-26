@@ -7,65 +7,103 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
             background-color: #f0f4f8;
             color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
         .quiz-container {
             background-color: white;
-            border-radius: 15px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             padding: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 90%;
         }
         h1 {
-            color: #2c3e50;
+            color: #003972;
             text-align: center;
+            margin-bottom: 20px;
         }
         .question {
-            margin-bottom: 20px;
             font-size: 18px;
             line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .options {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
         }
         button {
-            background-color: #3498db;
+            background-color: #003972;
             color: white;
             border: none;
             padding: 10px 20px;
-            margin: 10px 5px;
+            margin: 4px 2px;
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
             transition: background-color 0.3s;
         }
         button:hover {
-            background-color: #2980b9;
+            background-color: #002855;
         }
-        input[type="radio"] {
-            margin-right: 10px;
+        .btn-correct {
+            background-color: #ED5E42;
         }
-        label {
-            font-size: 16px;
+        .btn-incorrect {
+            background-color: #7F7F7F;
         }
-        #statistics {
-            margin-top: 30px;
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        #result, #statistics {
+            margin-top: 20px;
+            text-align: center;
+        }
+        #progress-bar {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        #progress {
+            width: 0;
+            height: 20px;
+            background-color: #ED5E42;
+            border-radius: 5px;
+            transition: width 0.5s;
+        }
+        #clear-data {
+            background-color: #7F7F7F;
+            margin-top: 20px;
+        }
+        #clear-data:hover {
+            background-color: #6A6A6A;
         }
     </style>
 </head>
 <body>
     <div class="quiz-container">
         <h1>'However' Usage Quiz</h1>
-        <p>Is the use of 'however' correct in the following sentences?</p>
-        <div id="quiz-content">
-            <div id="question-container"></div>
+        <div id="progress-bar">
+            <div id="progress"></div>
+        </div>
+        <div id="question-container"></div>
+        <div class="navigation">
             <button id="prev-button" onclick="showPreviousQuestion()" style="display:none;">Previous</button>
             <button id="next-button" onclick="showNextQuestion()">Next</button>
-            <button id="submit-button" onclick="submitQuiz()" style="display:none;">Submit</button>
         </div>
         <div id="result"></div>
         <div id="statistics"></div>
-        <button id="showStats" style="display:none;" onclick="showStatistics()">Show Overall Statistics</button>
+        <button id="clear-data" onclick="clearAllData()" style="display:none;">Clear All Data</button>
     </div>
 
     <script>
@@ -87,41 +125,45 @@
         function showQuestion(index) {
             const questionContainer = document.getElementById('question-container');
             questionContainer.innerHTML = `
-                <div class="question">
-                    <p>${index + 1}. ${questions[index]}</p>
-                    <input type="radio" name="q${index}" value="correct" id="q${index}c" ${responses[index] === 'correct' ? 'checked' : ''}> <label for="q${index}c">Correct</label>
-                    <input type="radio" name="q${index}" value="incorrect" id="q${index}i" ${responses[index] === 'incorrect' ? 'checked' : ''}> <label for="q${index}i">Incorrect</label>
+                <div class="question">${index + 1}. ${questions[index]}</div>
+                <div class="options">
+                    <button onclick="selectOption('correct', ${index})" class="${responses[index] === 'correct' ? 'btn-correct' : ''}">Correct</button>
+                    <button onclick="selectOption('incorrect', ${index})" class="${responses[index] === 'incorrect' ? 'btn-incorrect' : ''}">Incorrect</button>
                 </div>
             `;
 
             document.getElementById('prev-button').style.display = index > 0 ? 'inline-block' : 'none';
-            document.getElementById('next-button').style.display = index < questions.length - 1 ? 'inline-block' : 'none';
-            document.getElementById('submit-button').style.display = index === questions.length - 1 ? 'inline-block' : 'none';
+            document.getElementById('next-button').textContent = index < questions.length - 1 ? 'Next' : 'Submit';
+            updateProgressBar();
+        }
+
+        function selectOption(option, index) {
+            responses[index] = option;
+            showQuestion(index);
         }
 
         function showNextQuestion() {
-            responses[currentQuestion] = document.querySelector(`input[name="q${currentQuestion}"]:checked`)?.value || null;
-            currentQuestion++;
-            showQuestion(currentQuestion);
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                showQuestion(currentQuestion);
+            } else {
+                submitQuiz();
+            }
         }
 
         function showPreviousQuestion() {
-            responses[currentQuestion] = document.querySelector(`input[name="q${currentQuestion}"]:checked`)?.value || null;
-            currentQuestion--;
-            showQuestion(currentQuestion);
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion(currentQuestion);
+            }
         }
 
         function submitQuiz() {
-            responses[currentQuestion] = document.querySelector(`input[name="q${currentQuestion}"]:checked`)?.value || null;
-            
             const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = `Thank you for completing the quiz!`;
-
-            // Save responses to local storage
+            resultDiv.innerHTML = `<h2>Thank you for completing the quiz!</h2>`;
             saveResponses(responses);
-
-            // Show the statistics button
-            document.getElementById('showStats').style.display = 'block';
+            showStatistics();
+            document.getElementById('clear-data').style.display = 'block';
         }
 
         function saveResponses(responses) {
@@ -144,16 +186,32 @@
 
             let statsHtml = `<h2>Overall Statistics (${totalResponses} responses)</h2>`;
             stats.forEach((stat, index) => {
+                const total = stat.correct + stat.incorrect;
                 statsHtml += `
                     <p>Question ${index + 1}:</p>
                     <ul>
-                        <li>Correct: ${stat.correct} (${((stat.correct / totalResponses) * 100).toFixed(2)}%)</li>
-                        <li>Incorrect: ${stat.incorrect} (${((stat.incorrect / totalResponses) * 100).toFixed(2)}%)</li>
+                        <li>Correct: ${stat.correct} (${total > 0 ? ((stat.correct / total) * 100).toFixed(2) : 0}%)</li>
+                        <li>Incorrect: ${stat.incorrect} (${total > 0 ? ((stat.incorrect / total) * 100).toFixed(2) : 0}%)</li>
                     </ul>
                 `;
             });
 
             document.getElementById('statistics').innerHTML = statsHtml;
+        }
+
+        function updateProgressBar() {
+            const progress = document.getElementById('progress');
+            const percentage = ((currentQuestion + 1) / questions.length) * 100;
+            progress.style.width = `${percentage}%`;
+        }
+
+        function clearAllData() {
+            if (confirm("Are you sure you want to clear all stored quiz data? This action cannot be undone.")) {
+                localStorage.removeItem('quizResponses');
+                document.getElementById('statistics').innerHTML = '';
+                document.getElementById('result').innerHTML = '<h2>All data has been cleared.</h2>';
+                document.getElementById('clear-data').style.display = 'none';
+            }
         }
 
         // Initialize the quiz
