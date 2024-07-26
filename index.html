@@ -5,10 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>'However' Usage Quiz</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        /* ... (styles remain the same) ... */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .quiz-container {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            color: #003972;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .question {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .options {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #003972;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 4px 2px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #002855;
+        }
+        .btn-correct {
+            background-color: #ED5E42;
+        }
+        .btn-incorrect {
+            background-color: #7F7F7F;
+        }
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        #result, #statistics {
+            margin-top: 20px;
+        }
+        #progress-bar {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        #progress {
+            width: 0;
+            height: 20px;
+            background-color: #ED5E42;
+            border-radius: 5px;
+            transition: width 0.5s;
+        }
+        #clear-data {
+            background-color: #7F7F7F;
+            margin-top: 20px;
+        }
+        #clear-data:hover {
+            background-color: #6A6A6A;
+        }
+        .chart-container {
+            width: 100%;
+            height: 200px;
+            margin: 20px 0;
+        }
+        .question-stat {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -28,21 +113,16 @@
     </div>
 
     <script>
-        // Initialize Firebase (replace with your own config)
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            databaseURL: "YOUR_DATABASE_URL",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
         const questions = [
-            // ... (questions remain the same) ...
+            "Parliamentary elections were held three times over the period analysed – in 2010, 2016, and 2020, however the role of elections was not mentioned as a factor in governmental decision-making for social protection.",
+            "I would, however, like to stress that universal benefits are the only means of effectively reaching the poorest members of society.",
+            "The Iraqi government provides in-service training for teachers, however there is no clear indication of the specific training or professional development available for teachers in disability inclusive education.",
+            "However, the approach taken by UNICEF has resulted in a range of challenges.",
+            "One parent explained that they were offered treatment overseas by the MoH, however they were unable to accept the offer as they could not afford to pay for passport fees and were therefore unable to travel.",
+            "There is, however, nothing wrong with the overall design of the system.",
+            "At the PHC level, surveillance services are also available which can support early diagnosis and access to treatments for the prevention of disabilities, however, this service is limited in its delivery and impact.",
+            "I do not know whether the Government would, however, be interested in implementing a more inclusive old age pension.",
+            "In the preceding two decades the Human Development Index (HDI) trended upwards, however the period of 2012-2021 has been marked by more or less stagnant HDI improvements"
         ];
 
         let currentQuestion = 0;
@@ -50,19 +130,39 @@
         let charts = [];
 
         function showQuestion(index) {
-            // ... (function remains the same) ...
+            const questionContainer = document.getElementById('question-container');
+            questionContainer.innerHTML = `
+                <div class="question">${index + 1}. ${questions[index]}</div>
+                <div class="options">
+                    <button onclick="selectOption('correct', ${index})" class="${responses[index] === 'correct' ? 'btn-correct' : ''}">Correct</button>
+                    <button onclick="selectOption('incorrect', ${index})" class="${responses[index] === 'incorrect' ? 'btn-incorrect' : ''}">Incorrect</button>
+                </div>
+            `;
+
+            document.getElementById('prev-button').style.display = index > 0 ? 'inline-block' : 'none';
+            document.getElementById('next-button').textContent = index < questions.length - 1 ? 'Next' : 'Submit';
+            updateProgressBar();
         }
 
         function selectOption(option, index) {
-            // ... (function remains the same) ...
+            responses[index] = option;
+            showQuestion(index);
         }
 
         function showNextQuestion() {
-            // ... (function remains the same) ...
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                showQuestion(currentQuestion);
+            } else {
+                submitQuiz();
+            }
         }
 
         function showPreviousQuestion() {
-            // ... (function remains the same) ...
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion(currentQuestion);
+            }
         }
 
         function submitQuiz() {
@@ -74,70 +174,106 @@
         }
 
         function saveResponses(responses) {
-            database.ref('responses').push(responses);
+            let allResponses = JSON.parse(localStorage.getItem('quizResponses')) || [];
+            allResponses.push(responses);
+            localStorage.setItem('quizResponses', JSON.stringify(allResponses));
         }
 
         function showStatistics() {
-            database.ref('responses').once('value', (snapshot) => {
-                const allResponses = snapshot.val() ? Object.values(snapshot.val()) : [];
-                const totalResponses = allResponses.length;
-                const stats = questions.map(() => ({correct: 0, incorrect: 0}));
+            const allResponses = JSON.parse(localStorage.getItem('quizResponses')) || [];
+            const totalResponses = allResponses.length;
+            const stats = questions.map(() => ({correct: 0, incorrect: 0}));
 
-                allResponses.forEach(response => {
-                    response.forEach((answer, index) => {
-                        if (answer === 'correct') stats[index].correct++;
-                        if (answer === 'incorrect') stats[index].incorrect++;
-                    });
+            allResponses.forEach(response => {
+                response.forEach((answer, index) => {
+                    if (answer === 'correct') stats[index].correct++;
+                    if (answer === 'incorrect') stats[index].incorrect++;
                 });
+            });
 
-                let statsHtml = `<h2>Overall Statistics (${totalResponses} responses)</h2>`;
-                stats.forEach((stat, index) => {
-                    const total = stat.correct + stat.incorrect;
-                    statsHtml += `
-                        <div class="question-stat">
-                            <h3>Question ${index + 1}:</h3>
-                            <p>${questions[index]}</p>
-                            <p>Correct: ${stat.correct} (${((stat.correct / total) * 100).toFixed(2)}%)</p>
-                            <p>Incorrect: ${stat.incorrect} (${((stat.incorrect / total) * 100).toFixed(2)}%)</p>
-                            <div class="chart-container">
-                                <canvas id="chart-${index}"></canvas>
-                            </div>
+            let statsHtml = `<h2>Overall Statistics (${totalResponses} responses)</h2>`;
+            stats.forEach((stat, index) => {
+                const total = stat.correct + stat.incorrect;
+                statsHtml += `
+                    <div class="question-stat">
+                        <h3>Question ${index + 1}:</h3>
+                        <p>${questions[index]}</p>
+                        <p>Correct: ${stat.correct} (${((stat.correct / total) * 100).toFixed(2)}%)</p>
+                        <p>Incorrect: ${stat.incorrect} (${((stat.incorrect / total) * 100).toFixed(2)}%)</p>
+                        <div class="chart-container">
+                            <canvas id="chart-${index}"></canvas>
                         </div>
-                    `;
-                });
+                    </div>
+                `;
+            });
 
-                document.getElementById('statistics').innerHTML = statsHtml;
-                
-                // Create charts for each question
-                stats.forEach((stat, index) => {
-                    createChart(stat, index);
-                });
+            document.getElementById('statistics').innerHTML = statsHtml;
+            
+            // Create charts for each question
+            stats.forEach((stat, index) => {
+                createChart(stat, index);
             });
         }
 
         function createChart(stat, index) {
-            // ... (function remains the same) ...
+            const ctx = document.getElementById(`chart-${index}`).getContext('2d');
+            
+            if (charts[index]) {
+                charts[index].destroy();
+            }
+
+            charts[index] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Correct', 'Incorrect'],
+                    datasets: [{
+                        data: [stat.correct, stat.incorrect],
+                        backgroundColor: ['#ED5E42', '#7F7F7F'],
+                        borderColor: ['#ED5E42', '#7F7F7F'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Responses'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: `Question ${index + 1} Responses`
+                        }
+                    }
+                }
+            });
         }
 
         function updateProgressBar() {
-            // ... (function remains the same) ...
+            const progress = document.getElementById('progress');
+            const percentage = ((currentQuestion + 1) / questions.length) * 100;
+            progress.style.width = `${percentage}%`;
         }
 
         function clearAllData() {
             if (confirm("Are you sure you want to clear all stored quiz data? This action cannot be undone.")) {
-                database.ref('responses').remove()
-                    .then(() => {
-                        document.getElementById('statistics').innerHTML = '';
-                        document.getElementById('result').innerHTML = '<h2>All data has been cleared.</h2>';
-                        document.getElementById('clear-data').style.display = 'none';
-                        charts.forEach(chart => {
-                            if (chart) chart.destroy();
-                        });
-                        charts = [];
-                    })
-                    .catch((error) => {
-                        console.error("Error clearing data: ", error);
-                    });
+                localStorage.removeItem('quizResponses');
+                document.getElementById('statistics').innerHTML = '';
+                document.getElementById('result').innerHTML = '<h2>All data has been cleared.</h2>';
+                document.getElementById('clear-data').style.display = 'none';
+                charts.forEach(chart => {
+                    if (chart) chart.destroy();
+                });
+                charts = [];
             }
         }
 
