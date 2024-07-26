@@ -63,7 +63,6 @@
         }
         #result, #statistics {
             margin-top: 20px;
-            text-align: center;
         }
         #progress-bar {
             width: 100%;
@@ -85,10 +84,15 @@
         #clear-data:hover {
             background-color: #6A6A6A;
         }
-        #chart-container {
+        .chart-container {
             width: 100%;
-            height: 400px;
-            margin: 20px auto;
+            height: 200px;
+            margin: 20px 0;
+        }
+        .question-stat {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 20px;
         }
     </style>
 </head>
@@ -105,9 +109,6 @@
         </div>
         <div id="result"></div>
         <div id="statistics"></div>
-        <div id="chart-container">
-            <canvas id="statsChart"></canvas>
-        </div>
         <button id="clear-data" onclick="clearAllData()" style="display:none;">Clear All Data</button>
     </div>
 
@@ -121,12 +122,12 @@
             "There is, however, nothing wrong with the overall design of the system.",
             "At the PHC level, surveillance services are also available which can support early diagnosis and access to treatments for the prevention of disabilities, however, this service is limited in its delivery and impact.",
             "I do not know whether the Government would, however, be interested in implementing a more inclusive old age pension.",
-            "In the preceding two decades the Human Development Index (HDI) trended upwards, however the period of 2012-2021 has been marked by more or less stagnant HDI improvements."
+            "In the preceding two decades the Human Development Index (HDI) trended upwards, however the period of 2012-2021 has been marked by more or less stagnant HDI improvements"
         ];
 
         let currentQuestion = 0;
         const responses = new Array(questions.length).fill(null);
-        let chart;
+        let charts = [];
 
         function showQuestion(index) {
             const questionContainer = document.getElementById('question-container');
@@ -194,49 +195,46 @@
             stats.forEach((stat, index) => {
                 const total = stat.correct + stat.incorrect;
                 statsHtml += `
-                    <p>Question ${index + 1}:</p>
-                    <ul>
-                        <li>Correct: ${stat.correct} (${((stat.correct / total) * 100).toFixed(2)}%)</li>
-                        <li>Incorrect: ${stat.incorrect} (${((stat.incorrect / total) * 100).toFixed(2)}%)</li>
-                    </ul>
+                    <div class="question-stat">
+                        <h3>Question ${index + 1}:</h3>
+                        <p>Correct: ${stat.correct} (${((stat.correct / total) * 100).toFixed(2)}%)</p>
+                        <p>Incorrect: ${stat.incorrect} (${((stat.incorrect / total) * 100).toFixed(2)}%)</p>
+                        <div class="chart-container">
+                            <canvas id="chart-${index}"></canvas>
+                        </div>
+                    </div>
                 `;
             });
 
             document.getElementById('statistics').innerHTML = statsHtml;
-            createChart(stats);
+            
+            // Create charts for each question
+            stats.forEach((stat, index) => {
+                createChart(stat, index);
+            });
         }
 
-        function createChart(stats) {
-            const ctx = document.getElementById('statsChart').getContext('2d');
+        function createChart(stat, index) {
+            const ctx = document.getElementById(`chart-${index}`).getContext('2d');
             
-            const labels = stats.map((_, index) => `Q${index + 1}`);
-            const correctData = stats.map(stat => stat.correct);
-            const incorrectData = stats.map(stat => stat.incorrect);
-
-            if (chart) {
-                chart.destroy();
+            if (charts[index]) {
+                charts[index].destroy();
             }
 
-            chart = new Chart(ctx, {
+            charts[index] = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: labels,
+                    labels: ['Correct', 'Incorrect'],
                     datasets: [{
-                        label: 'Correct',
-                        data: correctData,
-                        backgroundColor: '#ED5E42',
-                        borderColor: '#ED5E42',
-                        borderWidth: 1
-                    }, {
-                        label: 'Incorrect',
-                        data: incorrectData,
-                        backgroundColor: '#7F7F7F',
-                        borderColor: '#7F7F7F',
+                        data: [stat.correct, stat.incorrect],
+                        backgroundColor: ['#ED5E42', '#7F7F7F'],
+                        borderColor: ['#ED5E42', '#7F7F7F'],
                         borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     scales: {
                         y: {
                             beginAtZero: true,
@@ -247,9 +245,12 @@
                         }
                     },
                     plugins: {
+                        legend: {
+                            display: false
+                        },
                         title: {
                             display: true,
-                            text: 'Question Statistics'
+                            text: `Question ${index + 1} Responses`
                         }
                     }
                 }
@@ -268,9 +269,10 @@
                 document.getElementById('statistics').innerHTML = '';
                 document.getElementById('result').innerHTML = '<h2>All data has been cleared.</h2>';
                 document.getElementById('clear-data').style.display = 'none';
-                if (chart) {
-                    chart.destroy();
-                }
+                charts.forEach(chart => {
+                    if (chart) chart.destroy();
+                });
+                charts = [];
             }
         }
 
