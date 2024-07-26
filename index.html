@@ -89,6 +89,22 @@
         }
         #clear-data:hover {
             background-color: #d32f2f;
+        }        .bar-graph {
+            width: 100%;
+            background-color: #f0f0f0;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .bar {
+            height: 20px;
+            transition: width 0.5s ease-in-out;
+        }
+        .correct-bar {
+            background-color: #4CAF50;
+        }
+        .incorrect-bar {
+            background-color: #f44336;
         }
     </style>
 </head>
@@ -189,11 +205,20 @@
             let statsHtml = `<h2>Overall Statistics (${totalResponses} responses)</h2>`;
             stats.forEach((stat, index) => {
                 const total = stat.correct + stat.incorrect;
+                const correctPercentage = total > 0 ? (stat.correct / total) * 100 : 0;
+                const incorrectPercentage = total > 0 ? (stat.incorrect / total) * 100 : 0;
+
                 statsHtml += `
                     <p>Question ${index + 1}:</p>
+                    <div class="bar-graph">
+                        <div class="bar correct-bar" style="width: ${correctPercentage}%"></div>
+                    </div>
+                    <div class="bar-graph">
+                        <div class="bar incorrect-bar" style="width: ${incorrectPercentage}%"></div>
+                    </div>
                     <ul>
-                        <li>Correct: ${stat.correct} (${total > 0 ? ((stat.correct / total) * 100).toFixed(2) : 0}%)</li>
-                        <li>Incorrect: ${stat.incorrect} (${total > 0 ? ((stat.incorrect / total) * 100).toFixed(2) : 0}%)</li>
+                        <li>Correct: ${stat.correct} (${correctPercentage.toFixed(2)}%)</li>
+                        <li>Incorrect: ${stat.incorrect} (${incorrectPercentage.toFixed(2)}%)</li>
                     </ul>
                 `;
             });
