@@ -6,16 +6,47 @@
     <title>'However' Usage Quiz</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
+            background-color: #f0f4f8;
+            color: #333;
+        }
+        .quiz-container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
         }
         .question {
             margin-bottom: 20px;
+            font-size: 18px;
+            line-height: 1.6;
         }
         button {
-            margin-top: 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        input[type="radio"] {
+            margin-right: 10px;
+        }
+        label {
+            font-size: 16px;
         }
         #statistics {
             margin-top: 30px;
@@ -23,15 +54,19 @@
     </style>
 </head>
 <body>
-    <h1>'However' Usage Quiz</h1>
-    <p>Is the use of 'however' correct in the following sentences?</p>
-    <form id="quizForm">
-        <div id="questions"></div>
-        <button type="button" onclick="submitQuiz()">Submit</button>
-    </form>
-    <div id="result"></div>
-    <div id="statistics"></div>
-    <button id="showStats" style="display:none;" onclick="showStatistics()">Show Overall Statistics</button>
+    <div class="quiz-container">
+        <h1>'However' Usage Quiz</h1>
+        <p>Is the use of 'however' correct in the following sentences?</p>
+        <div id="quiz-content">
+            <div id="question-container"></div>
+            <button id="prev-button" onclick="showPreviousQuestion()" style="display:none;">Previous</button>
+            <button id="next-button" onclick="showNextQuestion()">Next</button>
+            <button id="submit-button" onclick="submitQuiz()" style="display:none;">Submit</button>
+        </div>
+        <div id="result"></div>
+        <div id="statistics"></div>
+        <button id="showStats" style="display:none;" onclick="showStatistics()">Show Overall Statistics</button>
+    </div>
 
     <script>
         const questions = [
@@ -46,41 +81,41 @@
             "In the preceding two decades the Human Development Index (HDI) trended upwards, however the period of 2012-2021 has been marked by more or less stagnant HDI improvements"
         ];
 
-        const questionsContainer = document.getElementById('questions');
+        let currentQuestion = 0;
+        const responses = new Array(questions.length).fill(null);
 
-        questions.forEach((question, index) => {
-            const questionHtml = `
+        function showQuestion(index) {
+            const questionContainer = document.getElementById('question-container');
+            questionContainer.innerHTML = `
                 <div class="question">
-                    <p>${index + 1}. ${question}</p>
-                    <input type="radio" name="q${index}" value="correct" id="q${index}c"> <label for="q${index}c">Correct</label>
-                    <input type="radio" name="q${index}" value="incorrect" id="q${index}i"> <label for="q${index}i">Incorrect</label>
+                    <p>${index + 1}. ${questions[index]}</p>
+                    <input type="radio" name="q${index}" value="correct" id="q${index}c" ${responses[index] === 'correct' ? 'checked' : ''}> <label for="q${index}c">Correct</label>
+                    <input type="radio" name="q${index}" value="incorrect" id="q${index}i" ${responses[index] === 'incorrect' ? 'checked' : ''}> <label for="q${index}i">Incorrect</label>
                 </div>
             `;
-            questionsContainer.innerHTML += questionHtml;
-        });
+
+            document.getElementById('prev-button').style.display = index > 0 ? 'inline-block' : 'none';
+            document.getElementById('next-button').style.display = index < questions.length - 1 ? 'inline-block' : 'none';
+            document.getElementById('submit-button').style.display = index === questions.length - 1 ? 'inline-block' : 'none';
+        }
+
+        function showNextQuestion() {
+            responses[currentQuestion] = document.querySelector(`input[name="q${currentQuestion}"]:checked`)?.value || null;
+            currentQuestion++;
+            showQuestion(currentQuestion);
+        }
+
+        function showPreviousQuestion() {
+            responses[currentQuestion] = document.querySelector(`input[name="q${currentQuestion}"]:checked`)?.value || null;
+            currentQuestion--;
+            showQuestion(currentQuestion);
+        }
 
         function submitQuiz() {
-            let score = 0;
-            const totalQuestions = questions.length;
-            const responses = [];
-
-            for (let i = 0; i < totalQuestions; i++) {
-                const selectedAnswer = document.querySelector(`input[name="q${i}"]:checked`);
-                if (selectedAnswer) {
-                    responses.push(selectedAnswer.value);
-                    // For this example, we'll consider all uses as "incorrect" except for questions 2, 4, and 6
-                    const correctAnswers = [false, true, false, true, false, true, false, false, false];
-                    if ((selectedAnswer.value === "correct" && correctAnswers[i]) ||
-                        (selectedAnswer.value === "incorrect" && !correctAnswers[i])) {
-                        score++;
-                    }
-                } else {
-                    responses.push(null);
-                }
-            }
-
+            responses[currentQuestion] = document.querySelector(`input[name="q${currentQuestion}"]:checked`)?.value || null;
+            
             const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = `You scored ${score} out of ${totalQuestions}.`;
+            resultDiv.innerHTML = `Thank you for completing the quiz!`;
 
             // Save responses to local storage
             saveResponses(responses);
@@ -120,6 +155,9 @@
 
             document.getElementById('statistics').innerHTML = statsHtml;
         }
+
+        // Initialize the quiz
+        showQuestion(currentQuestion);
     </script>
 </body>
 </html>
