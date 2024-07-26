@@ -122,7 +122,7 @@
             "There is, however, nothing wrong with the overall design of the system.",
             "At the PHC level, surveillance services are also available which can support early diagnosis and access to treatments for the prevention of disabilities, however, this service is limited in its delivery and impact.",
             "I do not know whether the Government would, however, be interested in implementing a more inclusive old age pension.",
-            "In the preceding two decades the Human Development Index (HDI) trended upwards, however the period of 2012-2021 has been marked by more or less stagnant HDI improvements"
+            "In the preceding two decades the Human Development Index (HDI) trended upwards, however the period of 2012-2021 has been marked by more or less stagnant HDI improvements."
         ];
 
         let currentQuestion = 0;
@@ -197,6 +197,7 @@
                 statsHtml += `
                     <div class="question-stat">
                         <h3>Question ${index + 1}:</h3>
+                        <p>${questions[index]}</p>
                         <p>Correct: ${stat.correct} (${((stat.correct / total) * 100).toFixed(2)}%)</p>
                         <p>Incorrect: ${stat.incorrect} (${((stat.incorrect / total) * 100).toFixed(2)}%)</p>
                         <div class="chart-container">
