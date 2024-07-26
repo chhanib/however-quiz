@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>'However' Usage Quiz</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -88,6 +89,11 @@
         #clear-data:hover {
             background-color: #6A6A6A;
         }
+        #chart-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+        }
     </style>
 </head>
 <body>
@@ -103,6 +109,9 @@
         </div>
         <div id="result"></div>
         <div id="statistics"></div>
+        <div id="chart-container">
+            <canvas id="statsChart"></canvas>
+        </div>
         <button id="clear-data" onclick="clearAllData()" style="display:none;">Clear All Data</button>
     </div>
 
@@ -121,6 +130,7 @@
 
         let currentQuestion = 0;
         const responses = new Array(questions.length).fill(null);
+        let chart;
 
         function showQuestion(index) {
             const questionContainer = document.getElementById('question-container');
@@ -185,18 +195,60 @@
             });
 
             let statsHtml = `<h2>Overall Statistics (${totalResponses} responses)</h2>`;
-            stats.forEach((stat, index) => {
-                const total = stat.correct + stat.incorrect;
-                statsHtml += `
-                    <p>Question ${index + 1}:</p>
-                    <ul>
-                        <li>Correct: ${stat.correct} (${total > 0 ? ((stat.correct / total) * 100).toFixed(2) : 0}%)</li>
-                        <li>Incorrect: ${stat.incorrect} (${total > 0 ? ((stat.incorrect / total) * 100).toFixed(2) : 0}%)</li>
-                    </ul>
-                `;
-            });
-
             document.getElementById('statistics').innerHTML = statsHtml;
+
+            createChart(stats, totalResponses);
+        }
+
+        function createChart(stats, totalResponses) {
+            const ctx = document.getElementById('statsChart').getContext('2d');
+            
+            const labels = stats.map((_, index) => `Q${index + 1}`);
+            const correctData = stats.map(stat => (stat.correct / totalResponses) * 100);
+            const incorrectData = stats.map(stat => (stat.incorrect / totalResponses) * 100);
+
+            if (chart) {
+                chart.destroy();
+            }
+
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Correct (%)',
+                        data: correctData,
+                        backgroundColor: '#ED5E42',
+                        borderColor: '#ED5E42',
+                        borderWidth: 1
+                    }, {
+                        label: 'Incorrect (%)',
+                        data: incorrectData,
+                        backgroundColor: '#7F7F7F',
+                        borderColor: '#7F7F7F',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Percentage'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Question Statistics'
+                        }
+                    }
+                }
+            });
         }
 
         function updateProgressBar() {
@@ -211,6 +263,9 @@
                 document.getElementById('statistics').innerHTML = '';
                 document.getElementById('result').innerHTML = '<h2>All data has been cleared.</h2>';
                 document.getElementById('clear-data').style.display = 'none';
+                if (chart) {
+                    chart.destroy();
+                }
             }
         }
 
