@@ -25,7 +25,7 @@
             max-width: 800px;
             width: 90%;
         }
-        h1 {
+        h1, h2 {
             color: #003972;
             text-align: center;
             margin-bottom: 20px;
@@ -94,6 +94,19 @@
             max-width: 600px;
             margin: 20px auto;
         }
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .stats-table th, .stats-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .stats-table th {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 <body>
@@ -125,7 +138,7 @@
             "There is, however, nothing wrong with the overall design of the system.",
             "At the PHC level, surveillance services are also available which can support early diagnosis and access to treatments for the prevention of disabilities, however, this service is limited in its delivery and impact.",
             "I do not know whether the Government would, however, be interested in implementing a more inclusive old age pension.",
-            "In the preceding two decades the Human Development Index (HDI) trended upwards, however the period of 2012-2021 has been marked by more or less stagnant HDI improvements"
+            "In the preceding two decades the Human Development Index (HDI) trended upwards, however the period of 2012-2021 has been marked by more or less stagnant HDI improvements."
         ];
 
         let currentQuestion = 0;
@@ -195,6 +208,26 @@
             });
 
             let statsHtml = `<h2>Overall Statistics (${totalResponses} responses)</h2>`;
+            statsHtml += `<table class="stats-table">
+                            <tr>
+                                <th>Question</th>
+                                <th>Correct</th>
+                                <th>Incorrect</th>
+                            </tr>`;
+            
+            stats.forEach((stat, index) => {
+                const total = stat.correct + stat.incorrect;
+                const correctPercentage = total > 0 ? ((stat.correct / total) * 100).toFixed(2) : 0;
+                const incorrectPercentage = total > 0 ? ((stat.incorrect / total) * 100).toFixed(2) : 0;
+                
+                statsHtml += `<tr>
+                                <td>Question ${index + 1}</td>
+                                <td>${stat.correct} (${correctPercentage}%)</td>
+                                <td>${stat.incorrect} (${incorrectPercentage}%)</td>
+                              </tr>`;
+            });
+            
+            statsHtml += `</table>`;
             document.getElementById('statistics').innerHTML = statsHtml;
 
             createChart(stats, totalResponses);
