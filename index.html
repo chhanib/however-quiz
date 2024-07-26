@@ -11,11 +11,7 @@
             background-color: #f0f4f8;
             color: #333;
             margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            padding: 20px;
         }
         .quiz-container {
             background-color: white;
@@ -23,7 +19,7 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             padding: 30px;
             max-width: 800px;
-            width: 90%;
+            margin: 0 auto;
         }
         h1, h2 {
             color: #003972;
@@ -91,21 +87,8 @@
         }
         #chart-container {
             width: 100%;
-            max-width: 600px;
+            height: 400px;
             margin: 20px auto;
-        }
-        .stats-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        .stats-table th, .stats-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        .stats-table th {
-            background-color: #f2f2f2;
         }
     </style>
 </head>
@@ -208,37 +191,27 @@
             });
 
             let statsHtml = `<h2>Overall Statistics (${totalResponses} responses)</h2>`;
-            statsHtml += `<table class="stats-table">
-                            <tr>
-                                <th>Question</th>
-                                <th>Correct</th>
-                                <th>Incorrect</th>
-                            </tr>`;
-            
             stats.forEach((stat, index) => {
                 const total = stat.correct + stat.incorrect;
-                const correctPercentage = total > 0 ? ((stat.correct / total) * 100).toFixed(2) : 0;
-                const incorrectPercentage = total > 0 ? ((stat.incorrect / total) * 100).toFixed(2) : 0;
-                
-                statsHtml += `<tr>
-                                <td>Question ${index + 1}</td>
-                                <td>${stat.correct} (${correctPercentage}%)</td>
-                                <td>${stat.incorrect} (${incorrectPercentage}%)</td>
-                              </tr>`;
+                statsHtml += `
+                    <p>Question ${index + 1}:</p>
+                    <ul>
+                        <li>Correct: ${stat.correct} (${((stat.correct / total) * 100).toFixed(2)}%)</li>
+                        <li>Incorrect: ${stat.incorrect} (${((stat.incorrect / total) * 100).toFixed(2)}%)</li>
+                    </ul>
+                `;
             });
-            
-            statsHtml += `</table>`;
-            document.getElementById('statistics').innerHTML = statsHtml;
 
-            createChart(stats, totalResponses);
+            document.getElementById('statistics').innerHTML = statsHtml;
+            createChart(stats);
         }
 
-        function createChart(stats, totalResponses) {
+        function createChart(stats) {
             const ctx = document.getElementById('statsChart').getContext('2d');
             
             const labels = stats.map((_, index) => `Q${index + 1}`);
-            const correctData = stats.map(stat => (stat.correct / totalResponses) * 100);
-            const incorrectData = stats.map(stat => (stat.incorrect / totalResponses) * 100);
+            const correctData = stats.map(stat => stat.correct);
+            const incorrectData = stats.map(stat => stat.incorrect);
 
             if (chart) {
                 chart.destroy();
@@ -249,13 +222,13 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Correct (%)',
+                        label: 'Correct',
                         data: correctData,
                         backgroundColor: '#ED5E42',
                         borderColor: '#ED5E42',
                         borderWidth: 1
                     }, {
-                        label: 'Incorrect (%)',
+                        label: 'Incorrect',
                         data: incorrectData,
                         backgroundColor: '#7F7F7F',
                         borderColor: '#7F7F7F',
@@ -267,10 +240,9 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            max: 100,
                             title: {
                                 display: true,
-                                text: 'Percentage'
+                                text: 'Number of Responses'
                             }
                         }
                     },
